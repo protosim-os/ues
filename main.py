@@ -5,9 +5,10 @@ from simulator.universe_simulator import UniverseSimulator
 from simulator.db_manager import initialize_database, save_universe_to_db, load_universe_from_db
 from ui.main_menu import main_menu
 from ui.visualization import visualize_universe, display_tile_attributes, draw_pause_menu
-from real_time_manager import RealTimeManager
 
 pygame.init()
+
+# Initialize main game window
 screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Universal Evolution Simulator")
 
@@ -37,9 +38,6 @@ if simulator:
     offset_x, offset_y = 0, 0
     dragging = False
     drag_start_x, drag_start_y = 0, 0
-
-    real_time_manager = RealTimeManager(screen)
-    real_time_manager.start()
 
     while running:
         for event in pygame.event.get():
@@ -95,7 +93,6 @@ if simulator:
         clock.tick(60)  # Limit the frame rate to 60 FPS
 
     simulator.pause()
-    real_time_manager.stop()
     conn = sqlite3.connect('universe.db')
     save_universe_to_db(conn, simulator.grid)
     conn.close()

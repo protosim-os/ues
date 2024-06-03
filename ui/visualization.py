@@ -19,11 +19,20 @@ def visualize_universe(screen, grid, time_step, zoom, offset_x, offset_y, show_g
     time_text = font.render(f'Time: {time_step}', True, (0, 0, 0))
     screen.blit(time_text, (10, 10))
 
+    # Calculate universe dimensions
+    min_x = min(cell.x for cell in grid.values())
+    max_x = max(cell.x for cell in grid.values())
+    min_y = min(cell.y for cell in grid.values())
+    max_y = max(cell.y for cell in grid.values())
+    dimensions_text = f'Width: {max_x - min_x + 1}, Height: {max_y - min_y + 1}'
+    dimensions_surface = font.render(dimensions_text, True, (0, 0, 0))
+    screen.blit(dimensions_surface, (10, 50))
+
     # Draw speed control buttons
     button_rects = []
     button_color = (200, 200, 200)
     for i, speed in enumerate(['1', '2', '3', '4', '5', '6']):
-        rect = pygame.Rect(10 + i * 60, 50, 50, 30)
+        rect = pygame.Rect(10 + i * 60, 100, 50, 30)
         draw_button(screen, speed, rect, button_color, font)
         button_rects.append(rect)
     return button_rects
