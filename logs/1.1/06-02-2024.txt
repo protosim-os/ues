@@ -1,0 +1,19 @@
+7:11pm
+
+Phase: 1 - System (Universe) Evolution
+
+Release: 1.1 - Big Bang and Stellar Formation (BBSF 1.0)
+
+---
+
+***
+- im thinking the universe will be a grid of multiple cells, each representing a region of the larger universe.
+
+- the cells will have individual attributes such as location (x, y), temperature, density, matter, expansion rate, and 
+    matter distribution.
+
+- expansion rate: this will affect the probability of a new cell being generated on one of its edges ** 
+
+- in the beginning will be a single cell with high values, of which more will be generated. this will
+    initially be very qucik, but slow down rapidly over time, before shrinking in on itself
+***
