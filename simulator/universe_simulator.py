@@ -17,19 +17,19 @@ class UniverseSimulator:
         self.max_grid_size = max_grid_size
 
         # Parameters for expansion and contraction phases
-        self.initial_expansion_rate = 1  # Initial expansion rate
+        self.initial_expansion_rate = 0.0001  # Significantly lower initial expansion rate
         self.expansion_rate = self.calculate_initial_expansion_rate()
-        self.slowdown_factor = 0.99999  # Slowdown factor for gradual slowdown
-        self.contraction_factor = 1.0001  # Factor for contraction
-        self.stillness_duration = 5000  # Duration of virtual stillness
+        self.slowdown_factor = 0.999999  # Very gradual slowdown
+        self.contraction_factor = 1.000001  # Very gradual contraction
+        self.stillness_duration = 100000  # Extended duration of virtual stillness
 
         # Total duration parameters for different phases
-        self.big_bang_duration = 60
-        self.phase_25_duration = 1000
-        self.phase_50_duration = 5000
-        self.phase_75_duration = 15000
-        self.phase_100_duration = 30000
-        self.phase_collapse_75_duration = 55000
+        self.big_bang_duration = 600  # Longer big bang phase
+        self.phase_25_duration = 10000
+        self.phase_50_duration = 50000
+        self.phase_75_duration = 150000
+        self.phase_100_duration = 300000
+        self.phase_collapse_75_duration = 550000
 
     def initialize_universe(self, seed):
         seed = self.initialize_seed(seed)
