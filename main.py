@@ -5,6 +5,7 @@ from simulator.universe_simulator import UniverseSimulator
 from simulator.db_manager import initialize_database, save_universe_to_db, load_universe_from_db
 from ui.main_menu import main_menu
 from ui.visualization import visualize_universe, display_tile_attributes, draw_pause_menu
+from real_time_manager import RealTimeManager
 
 pygame.init()
 screen = pygame.display.set_mode((800, 600))
@@ -37,6 +38,9 @@ if simulator:
     dragging = False
     drag_start_x, drag_start_y = 0, 0
 
+    real_time_manager = RealTimeManager(screen)
+    real_time_manager.start()
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -50,6 +54,7 @@ if simulator:
                     for i, rect in enumerate(button_rects):
                         if rect.collidepoint(mouse_pos):
                             simulator.set_speed(i + 1)
+                            simulator.play()
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     dragging = False
@@ -73,6 +78,7 @@ if simulator:
                     paused = not paused
                 elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6]:
                     simulator.set_speed(int(event.unicode))
+                    simulator.play()
                 elif event.key == pygame.K_g:
                     show_grid = not show_grid
         
@@ -89,6 +95,7 @@ if simulator:
         clock.tick(60)  # Limit the frame rate to 60 FPS
 
     simulator.pause()
+    real_time_manager.stop()
     conn = sqlite3.connect('universe.db')
     save_universe_to_db(conn, simulator.grid)
     conn.close()

@@ -1,6 +1,7 @@
 import random
 import time
 from .cell import Cell
+from .quadtree import QuadTree, Rect
 
 class UniverseSimulator:
     def __init__(self, seed=None):
@@ -12,7 +13,8 @@ class UniverseSimulator:
         self.speed_map = {1: 1.0, 2: 0.5, 3: 0.1, 4: 0.05, 5: 0.01, 6: 0.005}
         self.big_bang_delay = 50  # Delay before the Big Bang starts
         self.big_bang_occurred = False
-    
+        self.quad_tree = QuadTree(Rect(0, 0, 800, 800), 4)  # Initialize QuadTree
+
     def initialize_universe(self, seed):
         seed = self.initialize_seed(seed)
         initial_tile = self.create_initial_tile()
@@ -69,9 +71,11 @@ class UniverseSimulator:
                 if (x, y) in grid:
                     cell = grid[(x, y)]
                     new_grid[(x, y)] = Cell(x, y, cell.density, cell.temperature)
+                    self.quad_tree.insert((x, y))  # Insert into quadtree
                 else:
                     neighbors = self.get_neighbors(grid, x, y)
                     new_grid[(x, y)] = self.generate_tile_from_neighbors(neighbors, x, y)
+                    self.quad_tree.insert((x, y))  # Insert into quadtree
 
         for (x, y), cell in new_grid.items():
             if cell.density > 0:
