@@ -17,7 +17,7 @@ class UniverseSimulator:
         self.max_grid_size = max_grid_size
 
         # Parameters for expansion and contraction phases
-        self.initial_expansion_rate = 0.0001  # Significantly lower initial expansion rate
+        self.initial_expansion_rate = 0.000001  # Significantly lower initial expansion rate
         self.expansion_rate = self.calculate_initial_expansion_rate()
         self.slowdown_factor = 0.999999  # Very gradual slowdown
         self.contraction_factor = 1.000001  # Very gradual contraction

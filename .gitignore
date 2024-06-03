@@ -133,4 +133,5 @@ cython_debug/
 .vscode/
 .history/
 
-universe.db
+*.db
+*.sqlite3
