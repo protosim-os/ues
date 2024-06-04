@@ -1,3 +1,5 @@
+# simulator/db_manager.py
+
 import sqlite3
 from .cell import Cell
 

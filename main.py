@@ -1,18 +1,22 @@
 import pygame
 import sqlite3
 import threading
+import time
+import psutil
 from simulator.universe_simulator import UniverseSimulator
 from simulator.db_manager import initialize_database, save_universe_to_db, load_universe_from_db
 from ui.main_menu import main_menu
-from ui.visualization import visualize_universe, display_tile_attributes, draw_pause_menu
+from ui.visualization import visualize_universe, display_tile_attributes, draw_pause_menu, visualize_cell_view
+from monitor.usage_monitor import start_monitor
 
 pygame.init()
 
-# Initialize main game window
-screen = pygame.display.set_mode((800, 600))
+# Increase the window size
+screen = pygame.display.set_mode((1200, 800))
 pygame.display.set_caption("Universal Evolution Simulator")
 
 initialize_database()
+start_monitor()  # Start usage monitoring
 
 choice = main_menu()
 simulator = None
@@ -38,6 +42,7 @@ if simulator:
     offset_x, offset_y = 0, 0
     dragging = False
     drag_start_x, drag_start_y = 0, 0
+    button_rects = []
 
     while running:
         for event in pygame.event.get():
@@ -49,10 +54,16 @@ if simulator:
                     drag_start_x, drag_start_y = event.pos
                 else:
                     mouse_pos = event.pos
-                    for i, rect in enumerate(button_rects):
-                        if rect.collidepoint(mouse_pos):
-                            simulator.set_speed(i + 1)
-                            simulator.play()
+                    if simulator.current_cell:
+                        simulator.close_cell_view()
+                    else:
+                        for i, rect in enumerate(button_rects):
+                            if rect.collidepoint(mouse_pos):
+                                simulator.set_speed(i + 1)
+                                simulator.play()
+                        cell_x, cell_y = int((mouse_pos[0] / zoom - 600 - offset_x) // 10), int((mouse_pos[1] / zoom - 400 - offset_y) // 10)
+                        if (cell_x, cell_y) in simulator.grid:
+                            simulator.open_cell_view(simulator.grid[(cell_x, cell_y)])
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
                     dragging = False
@@ -73,7 +84,10 @@ if simulator:
                     else:
                         simulator.play()
                 elif event.key == pygame.K_ESCAPE:
-                    paused = not paused
+                    if simulator.current_cell:
+                        simulator.close_cell_view()
+                    else:
+                        paused = not paused
                 elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6]:
                     simulator.set_speed(int(event.unicode))
                     simulator.play()
@@ -81,10 +95,13 @@ if simulator:
                     show_grid = not show_grid
         
         if not paused:
-            grid = simulator.grid
-            button_rects = visualize_universe(screen, grid, simulator.time_step, zoom, offset_x, offset_y, show_grid)
-            mouse_pos = pygame.mouse.get_pos()
-            display_tile_attributes(screen, grid, mouse_pos, zoom, offset_x, offset_y)
+            if simulator.current_cell:
+                visualize_cell_view(screen, simulator.current_cell, zoom, offset_x, offset_y)
+            else:
+                grid = simulator.grid
+                button_rects = visualize_universe(screen, grid, int(simulator.time_step), zoom, offset_x, offset_y, show_grid)
+                mouse_pos = pygame.mouse.get_pos()
+                display_tile_attributes(screen, grid, mouse_pos, zoom, offset_x, offset_y)
         
         if paused:
             draw_pause_menu(screen)

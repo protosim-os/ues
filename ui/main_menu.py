@@ -1,7 +1,9 @@
+# ui/main_menu.py
+
 import pygame
 
 def main_menu():
-    screen = pygame.display.set_mode((800, 600))
+    screen = pygame.display.set_mode((1200, 800))
     pygame.display.set_caption("Universal Evolution Simulator")
 
     font = pygame.font.Font(None, 74)

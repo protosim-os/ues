@@ -1,39 +1,36 @@
 import random
+import math
 import time
 from .cell import Cell
 from .quadtree import QuadTree, Rect
-import math
 
 class UniverseSimulator:
     def __init__(self, seed=None, max_grid_size=250):
+        self.seed = seed
         self.grid, self.seed = self.initialize_universe(seed)
         self.running = False
         self.time_step = 0
-        self.speed = 2  # Default speed set lower for better observation
-        self.speed_map = {1: 1.0, 2: 0.5, 3: 0.1, 4: 0.05, 5: 0.01, 6: 0.005}
+        self.speed = 1  # Default speed set for better observation
+        self.speed_map = {
+            1: 5.0,     # 5x slower than current speed 2
+            2: 2.5,     # 2.5x slower than current speed 2
+            3: 1.0,     # Same as current speed 2
+            4: 0.5,     # Slightly faster than current speed 2
+            5: 0.25,    # Faster
+            6: 0.1      # Fastest, as the current speed 2
+        }
         self.big_bang_delay = 50  # Delay before the Big Bang starts
         self.big_bang_occurred = False
         self.quad_tree = QuadTree(Rect(0, 0, 800, 800), 4)  # Initialize QuadTree
         self.max_grid_size = max_grid_size
+        self.current_cell = None  # For cell view
 
-        # Parameters for expansion and contraction phases
-        self.initial_expansion_rate = 0.000001  # Significantly lower initial expansion rate
-        self.expansion_rate = self.calculate_initial_expansion_rate()
-        self.slowdown_factor = 0.999999  # Very gradual slowdown
-        self.contraction_factor = 1.000001  # Very gradual contraction
-        self.stillness_duration = 100000  # Extended duration of virtual stillness
-
-        # Total duration parameters for different phases
-        self.big_bang_duration = 600  # Longer big bang phase
-        self.phase_25_duration = 10000
-        self.phase_50_duration = 50000
-        self.phase_75_duration = 150000
-        self.phase_100_duration = 300000
-        self.phase_collapse_75_duration = 550000
+        self.expansion_duration = 15000
+        self.collapse_duration = 15000
 
     def initialize_universe(self, seed):
         seed = self.initialize_seed(seed)
-        initial_tile = self.create_initial_tile()
+        initial_tile = self.create_initial_tile(seed)
         grid = {(initial_tile.x, initial_tile.y): initial_tile}
         return grid, seed
 
@@ -43,12 +40,9 @@ class UniverseSimulator:
         random.seed(seed)
         return seed
     
-    def create_initial_tile(self):
-        return Cell(x=0, y=0, density=10.0, temperature=10000.0)
+    def create_initial_tile(self, seed):
+        return Cell(x=0, y=0, density=10.0, temperature=10000.0, seed=seed)
     
-    def calculate_initial_expansion_rate(self):
-        return self.initial_expansion_rate
-
     def update_universe(self):
         if self.running:
             if not self.big_bang_occurred:
@@ -58,37 +52,10 @@ class UniverseSimulator:
                     self.time_step += 1
                     return
             
-            self.time_step += 1
-            self.grid = self.expand_universe(self.grid, self.expansion_rate)
-            self.expansion_rate = self.calculate_expansion_rate()
+            self.time_step += int(self.speed_map[self.speed])  # Increment time_step based on the speed
+            self.grid = self.expand_universe(self.grid)
     
-    def calculate_expansion_rate(self):
-        # Calculate the current size of the universe
-        total_cells = len(self.grid)
-        universe_size = int(math.sqrt(total_cells))
-
-        # Determine the phase of the expansion
-        if self.time_step < self.big_bang_duration:  # Big bang phase
-            return self.initial_expansion_rate
-        elif self.time_step < self.big_bang_duration + self.phase_25_duration:  # 0-25% expansion
-            progress = (self.time_step - self.big_bang_duration) / self.phase_25_duration
-            return self.initial_expansion_rate * (1 - progress * 0.75)
-        elif self.time_step < self.big_bang_duration + self.phase_25_duration + self.phase_50_duration:  # 25-50% expansion
-            progress = (self.time_step - self.big_bang_duration - self.phase_25_duration) / self.phase_50_duration
-            return self.initial_expansion_rate * 0.25 * (1 - progress * 0.5)
-        elif self.time_step < self.big_bang_duration + self.phase_25_duration + self.phase_50_duration + self.phase_75_duration:  # 50-75% expansion
-            progress = (self.time_step - self.big_bang_duration - self.phase_25_duration - self.phase_50_duration) / self.phase_75_duration
-            return self.initial_expansion_rate * 0.125 * (1 - progress * 0.25)
-        elif self.time_step < self.big_bang_duration + self.phase_25_duration + self.phase_50_duration + self.phase_75_duration + self.phase_100_duration:  # 75-100% expansion
-            progress = (self.time_step - self.big_bang_duration - self.phase_25_duration - self.phase_50_duration - self.phase_75_duration) / self.phase_100_duration
-            return self.initial_expansion_rate * 0.0625 * (1 - progress * 0.25)
-        elif self.time_step < self.big_bang_duration + self.phase_25_duration + self.phase_50_duration + self.phase_75_duration + self.phase_100_duration + self.phase_collapse_75_duration:  # Collapse to 75%
-            progress = (self.time_step - self.big_bang_duration - self.phase_25_duration - self.phase_50_duration - self.phase_75_duration - self.phase_100_duration) / self.phase_collapse_75_duration
-            return self.initial_expansion_rate * 0.03125 * (1 - progress * 0.25)
-        else:  # Post-collapse
-            return 0.1  # Very slow expansion rate
-    
-    def expand_universe(self, grid, expansion_rate):
+    def expand_universe(self, grid):
         new_grid = {}
         min_x = min(cell.x for cell in grid.values())
         max_x = max(cell.x for cell in grid.values())
@@ -98,13 +65,19 @@ class UniverseSimulator:
         if max_x - min_x >= self.max_grid_size or max_y - min_y >= self.max_grid_size:
             return grid  # Don't expand if the grid size limit is reached
 
-        int_expansion_rate = max(int(expansion_rate), 1)  # Convert expansion rate to an integer
+        # Calculate expansion/contraction rate based on time_step
+        if self.time_step <= self.expansion_duration:
+            expansion_phase = self.time_step / self.expansion_duration
+            expansion_rate = max(1, int((self.max_grid_size / 2) * expansion_phase))
+        else:
+            contraction_phase = (self.time_step - self.expansion_duration) / self.collapse_duration
+            expansion_rate = max(1, int((self.max_grid_size / 2) * (1 - contraction_phase)))
 
-        for x in range(min_x - int_expansion_rate, max_x + int_expansion_rate + 1):
-            for y in range(min_y - int_expansion_rate, max_y + int_expansion_rate + 1):
+        for x in range(min_x - expansion_rate, max_x + expansion_rate + 1):
+            for y in range(min_y - expansion_rate, max_y + expansion_rate + 1):
                 if (x, y) in grid:
                     cell = grid[(x, y)]
-                    new_grid[(x, y)] = Cell(x, y, cell.density, cell.temperature)
+                    new_grid[(x, y)] = Cell(x, y, cell.density, cell.temperature, seed=self.seed)
                     self.quad_tree.insert((x, y))  # Insert into quadtree
                 else:
                     neighbors = self.get_neighbors(grid, x, y)
@@ -135,7 +108,7 @@ class UniverseSimulator:
         else:
             density = random.uniform(0.1, 1.0)
             temperature = random.uniform(0.1, 1.0)
-        return Cell(x=x, y=y, density=density, temperature=temperature)
+        return Cell(x=x, y=y, density=density, temperature=temperature, seed=self.seed)
     
     def distribute_density(self, grid, x, y):
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -151,7 +124,7 @@ class UniverseSimulator:
         self.running = True
         while self.running:
             self.update_universe()
-            time.sleep(self.speed_map[self.speed] * 2)  # Adjust time step duration to slow down simulation
+            time.sleep(self.speed_map[self.speed] * 0.05)  # Adjust time step duration to slow down simulation
     
     def pause(self):
         self.running = False
@@ -162,3 +135,9 @@ class UniverseSimulator:
     def set_speed(self, speed):
         if speed in self.speed_map:
             self.speed = speed
+
+    def open_cell_view(self, cell):
+        self.current_cell = cell
+
+    def close_cell_view(self):
+        self.current_cell = None

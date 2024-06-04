@@ -1,4 +1,5 @@
 import pygame
+from simulator.celestial_bodies import Nebula, Star, Planet, Moon, Asteroid, Comet, BlackHole, Galaxy
 
 def draw_button(screen, text, rect, color, font):
     pygame.draw.rect(screen, color, rect)
@@ -9,7 +10,7 @@ def visualize_universe(screen, grid, time_step, zoom, offset_x, offset_y, show_g
     screen.fill((255, 255, 255))  # White background
     for (x, y), cell in grid.items():
         color = (0, 0, 0)  # Black tiles
-        rect = pygame.Rect((x * 10 + 400 + offset_x) * zoom, (y * 10 + 300 + offset_y) * zoom, 10 * zoom, 10 * zoom)
+        rect = pygame.Rect((x * 10 + 600 + offset_x) * zoom, (y * 10 + 400 + offset_y) * zoom, 10 * zoom, 10 * zoom)
         pygame.draw.rect(screen, color, rect)
         if show_grid:
             pygame.draw.rect(screen, (200, 200, 200), rect, 1)  # Grid lines
@@ -37,8 +38,36 @@ def visualize_universe(screen, grid, time_step, zoom, offset_x, offset_y, show_g
         button_rects.append(rect)
     return button_rects
 
+def visualize_cell_view(screen, cell, zoom, offset_x, offset_y):
+    screen.fill((0, 0, 0))  # Black background for cell view
+    for body in cell.celestial_bodies:
+        if isinstance(body, Nebula):
+            color = (173, 216, 230)  # Light blue for nebulae
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(body.size * zoom))
+        elif isinstance(body, Star):
+            color = (255, 255, 0)  # Yellow for stars
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(2 * zoom))
+        elif isinstance(body, Planet):
+            color = (0, 255, 0)  # Green for planets
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(1.5 * zoom))
+        elif isinstance(body, Moon):
+            color = (169, 169, 169)  # Grey for moons
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(1 * zoom))
+        elif isinstance(body, Asteroid):
+            color = (139, 69, 19)  # Brown for asteroids
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(0.5 * zoom))
+        elif isinstance(body, Comet):
+            color = (255, 255, 255)  # White for comets
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(0.5 * zoom))
+        elif isinstance(body, BlackHole):
+            color = (0, 0, 0)  # Black for black holes
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(3 * zoom))
+        elif isinstance(body, Galaxy):
+            color = (255, 20, 147)  # Pink for galaxies
+            pygame.draw.circle(screen, color, (int(body.x * 10 + 600 + offset_x) * zoom, int(body.y * 10 + 400 + offset_y) * zoom), int(body.size * zoom))
+
 def display_tile_attributes(screen, grid, mouse_pos, zoom, offset_x, offset_y):
-    x, y = (mouse_pos[0] / zoom - 400 - offset_x) // 10, (mouse_pos[1] / zoom - 300 - offset_y) // 10
+    x, y = int((mouse_pos[0] / zoom - 600 - offset_x) // 10), int((mouse_pos[1] / zoom - 400 - offset_y) // 10)
     if (x, y) in grid:
         cell = grid[(x, y)]
         font = pygame.font.Font(None, 24)
